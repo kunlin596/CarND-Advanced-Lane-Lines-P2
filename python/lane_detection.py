@@ -62,12 +62,36 @@ def load_images(imagePath):
     return images
 
 
-def search_lane(image, windowSize=None, show=False):
+def search_lane(image, KK, windowSize=None, show=False):
     if windowSize is None:
         windowSize = (100, 20)
 
-    leftX = WARPED_ROI_CORNERS[0, 0]
-    rightX = WARPED_ROI_CORNERS[2, 0]
+    y, x = np.nonzero(image[image.shape[0] // 2:, :])
+    bins = int(image.shape[1] / 10 + 0.5)
+    h, edges = np.histogram(x, bins=bins)
+
+    medianIndex = len(h) // 2
+    leftMaxBin = np.argmax(h[:medianIndex])
+    leftMax = h[:medianIndex].max()
+    rightMaxBin = np.argmax(h[medianIndex:]) + medianIndex
+    rightMax = h[medianIndex:].max()
+
+    # This value should be computed using camera KK and extrinsics,
+    # here, it is estimated using straight_line.jpg
+    laneWidthInPixel = 596.1325
+
+    # The distance between the 2 peaks should be roughly `laneWidthInPixel`,
+    # Use the 2nd peak is way small than the 1st peak, use 1st peak to fix the 2nd peak
+    leftX = edges[leftMaxBin: leftMaxBin + 1].mean()
+    rightX = edges[rightMaxBin: rightMaxBin + 1].mean()
+
+    if rightMax / leftMax < 0.3:
+        rightX = leftX + laneWidthInPixel
+    elif leftMax / rightMax < 0.3:
+        leftX = rightX - laneWidthInPixel
+
+    # leftX = WARPED_ROI_CORNERS[0, 0]
+    # rightX = WARPED_ROI_CORNERS[2, 0]
 
     windowHeight = windowSize[1]
     currentY = image.shape[0] - windowHeight / 2
@@ -148,6 +172,8 @@ def search_lane(image, windowSize=None, show=False):
         plt.pause(0.001)
         plt.show(block=False)
 
+    embed()
+
     return leftPoly, rightPoly
 
 
@@ -205,7 +231,7 @@ def lane_detection(imageName, image, KK, Kc, show=False):
         plt.show(block=False)
 
     # Sliding window lane searching
-    leftPoly, rightPoly = search_lane(warpedCannyImage)
+    leftPoly, rightPoly = search_lane(warpedCannyImage, KK)
 
     yRange = np.arange(0, warpedImage.shape[0])
     if leftPoly is not None:
@@ -227,6 +253,7 @@ def lane_detection(imageName, image, KK, Kc, show=False):
 
     overlayImage = cv2.addWeighted(image, 1.0, detectionOverlap, 0.5, 0.0)
 
+    show = True
     if show:
         plt.clf()
         plt.imshow(overlayImage)
@@ -239,7 +266,8 @@ def lane_detection(imageName, image, KK, Kc, show=False):
 
 def lane_detections(images, KK, Kc, show=False):
     for index, (imageName, image) in enumerate(images.items()):
-        lane_detection(imageName, image, KK, Kc)
+        if imageName == 'test1':
+            lane_detection(imageName, image, KK, Kc)
 
 
 if __name__ == '__main__':
