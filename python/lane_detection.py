@@ -171,8 +171,7 @@ def search_lane(image, KK, windowSize=None, show=False):
             plt.plot(estimatedRightX, np.arange(0, image.shape[0]))
         plt.pause(0.001)
         plt.show(block=False)
-
-    embed()
+        embed()
 
     return leftPoly, rightPoly
 
@@ -266,8 +265,7 @@ def lane_detection(imageName, image, KK, Kc, show=False):
 
 def lane_detections(images, KK, Kc, show=False):
     for index, (imageName, image) in enumerate(images.items()):
-        if imageName == 'test1':
-            lane_detection(imageName, image, KK, Kc)
+        lane_detection(imageName, image, KK, Kc)
 
 
 if __name__ == '__main__':
