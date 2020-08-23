@@ -55,17 +55,17 @@ def load_images(imagePath):
         raise Exception('%s is not valid.' % (imagePath))
 
     images = {}
-    imagePaths = glob.glob(os.path.join(imagePath, '*.jpg'))
+    image_paths = glob.glob(os.path.join(imagePath, '*.jpg'))
 
-    for index, path in enumerate(imagePaths):
+    for index, path in enumerate(image_paths):
         image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
         log.debug('loaded %s', path)
-        imageName = os.path.basename(path).split('.')[0]
-        images[imageName] = image
+        image_name = os.path.basename(path).split('.')[0]
+        images[image_name] = image
     return images
 
 
-def search_lane(image, KK, windowSize=None, show=False):
+def search_lane(image, KK, window_size=None, show=False):
     """Search lane curve in warped image
 
     Arguments:
@@ -73,56 +73,56 @@ def search_lane(image, KK, windowSize=None, show=False):
         KK {[type]} -- [description]
 
     Keyword Arguments:
-        windowSize {[type]} -- [description] (default: {None})
+        window_size {[type]} -- [description] (default: {None})
         show {bool} -- [description] (default: {False})
 
     Returns:
         [type] -- [description]
     """
-    if windowSize is None:
-        windowSize = (100, 20)
+    if window_size is None:
+        window_size = (100, 20)
 
     y, x = np.nonzero(image[image.shape[0] // 2:, :])
     bins = int(image.shape[1] / 10 + 0.5)
     h, edges = np.histogram(x, bins=bins)
 
-    medianIndex = len(h) // 2
-    leftMaxBin = np.argmax(h[:medianIndex])
-    leftMax = h[:medianIndex].max()
-    rightMaxBin = np.argmax(h[medianIndex:]) + medianIndex
-    rightMax = h[medianIndex:].max()
+    median_index = len(h) // 2
+    left_max_bin = np.argmax(h[:median_index])
+    left_max = h[:median_index].max()
+    right_max_bin = np.argmax(h[median_index:]) + median_index
+    right_max = h[median_index:].max()
 
     # This value should be computed using camera KK and extrinsics,
     # here, it is estimated using straight_line.jpg
-    laneWidthInPixel = 596.1325
+    lane_width_in_pixel = 596.1325
 
-    # The distance between the 2 peaks should be roughly `laneWidthInPixel`,
+    # The distance between the 2 peaks should be roughly `lane_width_in_pixel`,
     # Use the 2nd peak is way small than the 1st peak, use 1st peak to fix the 2nd peak
-    leftX = edges[leftMaxBin: leftMaxBin + 1].mean()
-    rightX = edges[rightMaxBin: rightMaxBin + 1].mean()
+    left_x = edges[left_max_bin: left_max_bin + 1].mean()
+    rightX = edges[right_max_bin: right_max_bin + 1].mean()
 
-    if rightMax / leftMax < 0.3:
-        rightX = leftX + laneWidthInPixel
-    elif leftMax / rightMax < 0.3:
-        leftX = rightX - laneWidthInPixel
+    if right_max / left_max < 0.3:
+        rightX = left_x + lane_width_in_pixel
+    elif left_max / right_max < 0.3:
+        left_x = rightX - lane_width_in_pixel
 
-    # leftX = WARPED_ROI_CORNERS[0, 0]
+    # left_x = WARPED_ROI_CORNERS[0, 0]
     # rightX = WARPED_ROI_CORNERS[2, 0]
 
-    windowHeight = windowSize[1]
-    currentY = image.shape[0] - windowHeight / 2
-    currentLeftX = int(leftX)
-    currentRightX = int(rightX)
+    window_height = window_size[1]
+    current_y = image.shape[0] - window_height / 2
+    current_left_x = int(left_x)
+    current_right_y = int(rightX)
 
-    def get_window_patch(currentX, currentY, windowSize):
-        corners = cv2.boxPoints(((currentX, currentY), windowSize, 0)).astype(np.int32)
-        minXY = corners.min(axis=0)
-        maxXY = corners.max(axis=0)
-        patch = image[minXY[1]: maxXY[1], minXY[0]: maxXY[0]]
-        return patch, minXY, corners
+    def get_window_patch(currentX, current_y, window_size):
+        corners = cv2.boxPoints(((currentX, current_y), window_size, 0)).astype(np.int32)
+        min_xy = corners.min(axis=0)
+        max_xy = corners.max(axis=0)
+        patch = image[min_xy[1]: max_xy[1], min_xy[0]: max_xy[0]]
+        return patch, min_xy, corners
 
-    leftCenters = []
-    rightCenters = []
+    left_centers = []
+    right_centers = []
 
     if show:
         plt.cla()
@@ -130,66 +130,66 @@ def search_lane(image, KK, windowSize=None, show=False):
         plt.plot(WARPED_ROI_CORNERS[:, 0], WARPED_ROI_CORNERS[:, 1], 'r.')
         plt.show(block=False)
 
-    currentWindowSize = (200, 20)
+    current_window_size = (200, 20)
 
-    while currentY > 0:
-        leftPatch, topLeftCornerLeft, leftCorners = get_window_patch(currentLeftX, currentY, currentWindowSize)
-        rightPatch, topLeftCornerRight, rightCorners = get_window_patch(currentRightX, currentY, currentWindowSize)
+    while current_y > 0:
+        left_patch, top_left_corner_left, left_corners = get_window_patch(current_left_x, current_y, current_window_size)
+        right_patch, top_left_corner_right, right_corners = get_window_patch(current_right_y, current_y, current_window_size)
 
-        validX = np.nonzero(leftPatch)[1]
-        x = sorted(validX)[len(validX) // 2] if len(validX) > 5 else np.nan
-        leftCenter = np.array([x, leftPatch.shape[0] / 2]) + topLeftCornerLeft
+        valid_x = np.nonzero(left_patch)[1]
+        x = sorted(valid_x)[len(valid_x) // 2] if len(valid_x) > 5 else np.nan
+        left_center = np.array([x, left_patch.shape[0] / 2]) + top_left_corner_left
 
-        validX = np.nonzero(rightPatch)[1]
-        x = sorted(validX)[len(validX) // 2] if len(validX) > 5 else np.nan
-        rightCenter = np.array([x, rightPatch.shape[0] / 2]) + topLeftCornerRight
+        valid_x = np.nonzero(right_patch)[1]
+        x = sorted(valid_x)[len(valid_x) // 2] if len(valid_x) > 5 else np.nan
+        right_center = np.array([x, right_patch.shape[0] / 2]) + top_left_corner_right
 
-        leftCenters.append(leftCenter)
-        rightCenters.append(rightCenter)
+        left_centers.append(left_center)
+        right_centers.append(right_center)
 
-        if ~np.isnan(leftCenter[0]):
-            currentLeftX = int(leftCenter[0] + 0.5)
+        if ~np.isnan(left_center[0]):
+            current_left_x = int(left_center[0] + 0.5)
 
-        if ~np.isnan(rightCenter[0]):
-            currentRightX = int(rightCenter[0] + 0.5)
+        if ~np.isnan(right_center[0]):
+            current_right_y = int(right_center[0] + 0.5)
 
         # Move window up
-        currentY -= windowSize[1]
+        current_y -= window_size[1]
 
         if show:
-            plt.plot(leftCorners[:, 0][[0, 1, 2, 3, 0]], leftCorners[:, 1][[0, 1, 2, 3, 0]], 'r')
-            plt.plot(rightCorners[:, 0][[0, 1, 2, 3, 0]], rightCorners[:, 1][[0, 1, 2, 3, 0]], 'b')
+            plt.plot(left_corners[:, 0][[0, 1, 2, 3, 0]], left_corners[:, 1][[0, 1, 2, 3, 0]], 'r')
+            plt.plot(right_corners[:, 0][[0, 1, 2, 3, 0]], right_corners[:, 1][[0, 1, 2, 3, 0]], 'b')
 
-    leftCenters = np.array(leftCenters)
-    rightCenters = np.array(rightCenters)
+    left_centers = np.array(left_centers)
+    right_centers = np.array(right_centers)
 
-    leftCenters = leftCenters[~np.isnan(leftCenters[:, 0])]
-    rightCenters = rightCenters[~np.isnan(rightCenters[:, 0])]
+    left_centers = left_centers[~np.isnan(left_centers[:, 0])]
+    right_centers = right_centers[~np.isnan(right_centers[:, 0])]
 
-    leftPoly = None
-    estimatedLeftX = None
-    if len(leftCenters):
-        leftPoly = np.polyfit(leftCenters[:, 1], leftCenters[:, 0], 2)
-        estimatedLeftX = np.polyval(leftPoly, np.arange(0, image.shape[0]))
+    left_poly = None
+    estimated_left_x = None
+    if len(left_centers):
+        left_poly = np.polyfit(left_centers[:, 1], left_centers[:, 0], 2)
+        estimated_left_x = np.polyval(left_poly, np.arange(0, image.shape[0]))
 
-    rightPoly = None
-    estimatedRightX = None
-    if len(rightCenters):
-        rightPoly = np.polyfit(rightCenters[:, 1], rightCenters[:, 0], 2)
-        estimatedRightX = np.polyval(rightPoly, np.arange(0, image.shape[0]))
+    right_poly = None
+    estimated_right_x = None
+    if len(right_centers):
+        right_poly = np.polyfit(right_centers[:, 1], right_centers[:, 0], 2)
+        estimated_right_x = np.polyval(right_poly, np.arange(0, image.shape[0]))
 
     if show:
-        plt.plot(leftCenters[:, 0], leftCenters[:, 1], 'r.')
-        if estimatedLeftX is not None:
-            plt.plot(estimatedLeftX, np.arange(0, image.shape[0]))
-        plt.plot(rightCenters[:, 0], rightCenters[:, 1], 'g.')
-        if estimatedRightX is not None:
-            plt.plot(estimatedRightX, np.arange(0, image.shape[0]))
+        plt.plot(left_centers[:, 0], left_centers[:, 1], 'r.')
+        if estimated_left_x is not None:
+            plt.plot(estimated_left_x, np.arange(0, image.shape[0]))
+        plt.plot(right_centers[:, 0], right_centers[:, 1], 'g.')
+        if estimated_right_x is not None:
+            plt.plot(estimated_right_x, np.arange(0, image.shape[0]))
         plt.pause(0.001)
         plt.show(block=False)
         embed()
 
-    return leftPoly, rightPoly
+    return left_poly, right_poly
 
 
 def measure_curvature_pixels(poly, y_value):
@@ -204,10 +204,10 @@ def measure_curvature_pixels(poly, y_value):
     return (1 + (2 * A * y_value * B) ** 2) ** (1.5) / abs(2 * A)
 
 
-def lane_detection(imageName, image, KK, Kc, show=False):
+def lane_detection(image_name, image, KK, Kc, show=False):
     """ Main lane detection function
     Arguments:
-        imageName {[type]} -- [description]
+        image_name {[type]} -- [description]
         image {[type]} -- [description]
         KK {[type]} -- [description]
         Kc {[type]} -- [description]
@@ -215,37 +215,37 @@ def lane_detection(imageName, image, KK, Kc, show=False):
     Keyword Arguments:
         show {bool} -- [description] (default: {False})
     """
-    log.debug('current imageName=%s', imageName)
+    log.debug('current image_name=%s', image_name)
 
-    hlsImage = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
-    hsvImage = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    hls_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
     if show:
         for i in range(3):
             plt.subplot(2, 3, i + 1)
-            plt.imshow(hlsImage[:, :, i], cmap='gray')
+            plt.imshow(hls_image[:, :, i], cmap='gray')
             plt.subplot(2, 3, i + 1 + 3)
-            plt.imshow(hsvImage[:, :, i], cmap='gray')
+            plt.imshow(hsv_image[:, :, i], cmap='gray')
 
     # Use S channel in HSL image since the lane color is more out-standing than others
-    laneImage = hlsImage[:, :, 2]
+    lane_image = hls_image[:, :, 2]
 
     # Undistort image
-    undistortedImage = cv2.undistort(laneImage, KK, Kc)
-    kernelSize = 3
+    undistorted_image = cv2.undistort(lane_image, KK, Kc)
+    kernel_size = 3
 
     # Create sobel image
-    gradX = np.abs(cv2.Sobel(undistortedImage, cv2.CV_16S, 1, 0, kernelSize))
-    gradY = np.abs(cv2.Sobel(undistortedImage, cv2.CV_16S, 0, 1, kernelSize))
-    sobelImage = cv2.addWeighted(gradX, 0.5, gradY, 0.5, 0)
+    grad_x = np.abs(cv2.Sobel(undistorted_image, cv2.CV_16S, 1, 0, kernel_size))
+    grad_y = np.abs(cv2.Sobel(undistorted_image, cv2.CV_16S, 0, 1, kernel_size))
+    sobel_image = cv2.addWeighted(grad_x, 0.5, grad_y, 0.5, 0)
 
-    cannyImage = cv2.Canny(laneImage.astype(np.uint8), 155, 255)
+    canny_image = cv2.Canny(lane_image.astype(np.uint8), 155, 255)
 
     # Warp image
     homography = get_homography()
-    warpTransform = homography[0]
-    warpedCannyImage = cv2.warpPerspective(cannyImage, warpTransform, (cannyImage.shape[1], cannyImage.shape[0]))
-    warpedImage = cv2.warpPerspective(image, warpTransform, (cannyImage.shape[1], cannyImage.shape[0]))
+    warp_transform = homography[0]
+    warped_canny_image = cv2.warpPerspective(canny_image, warp_transform, (canny_image.shape[1], canny_image.shape[0]))
+    warped_image = cv2.warpPerspective(image, warp_transform, (canny_image.shape[1], canny_image.shape[0]))
 
     if show:
         plt.figure()
@@ -254,64 +254,64 @@ def lane_detection(imageName, image, KK, Kc, show=False):
         plt.imshow(image)
         plt.plot(ROI_CORNERS[:, 0], ROI_CORNERS[:, 1], 'r.')
         plt.subplot(322)
-        plt.imshow(warpedImage)
+        plt.imshow(warped_image)
         plt.plot(WARPED_ROI_CORNERS[:, 0], WARPED_ROI_CORNERS[:, 1], 'r.')
         plt.subplot(323)
-        plt.imshow(cannyImage, cmap='gray')
+        plt.imshow(canny_image, cmap='gray')
         plt.subplot(324)
-        plt.imshow(warpedCannyImage, cmap='gray')
+        plt.imshow(warped_canny_image, cmap='gray')
         plt.subplot(325)
-        plt.imshow(sobelImage, cmap='gray')
+        plt.imshow(sobel_image, cmap='gray')
         plt.subplot(326)
-        plt.imshow(cannyImage, cmap='gray')
+        plt.imshow(canny_image, cmap='gray')
         plt.pause(0.001)
         plt.show(block=False)
 
     # Sliding window lane searching
-    leftPoly, rightPoly = search_lane(warpedCannyImage, KK)
+    left_poly, right_poly = search_lane(warped_canny_image, KK)
 
-    warpTransformInv = np.linalg.inv(warpTransform)
-    yRange = np.arange(0, warpedImage.shape[0])
-    leftLaneCorners = None
-    if leftPoly is not None:
-        leftX = np.polyval(leftPoly, yRange)
-        left_curvature = measure_curvature_pixels(leftPoly, warpTransform.shape[0])
+    warp_transform_inv = np.linalg.inv(warp_transform)
+    y_range = np.arange(0, warped_image.shape[0])
+    left_lane_corners = None
+    if left_poly is not None:
+        left_x = np.polyval(left_poly, y_range)
+        left_curvature = measure_curvature_pixels(left_poly, warp_transform.shape[0])
         log.debug('left_curvature=%s', left_curvature)
-        warpedLeftLaneCorners = np.vstack([leftX, yRange]).T
-        leftLaneCorners = cv2.perspectiveTransform(warpedLeftLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
+        warped_left_lane_corners = np.vstack([left_x, y_range]).T
+        left_lane_corners = cv2.perspectiveTransform(warped_left_lane_corners.reshape(-1, 1, 2), warp_transform_inv).reshape(-1, 2)
 
-    rightLaneCorners = None
-    if rightPoly is not None:
-        rightX = np.polyval(rightPoly, yRange)
-        right_curvature = measure_curvature_pixels(rightPoly, warpTransform.shape[0])
+    right_lane_corners = None
+    if right_poly is not None:
+        rightX = np.polyval(right_poly, y_range)
+        right_curvature = measure_curvature_pixels(right_poly, warp_transform.shape[0])
         log.debug('right_curvature=%s', right_curvature)
-        warpedRightLaneCorners = np.vstack([rightX, yRange]).T
-        rightLaneCorners = cv2.perspectiveTransform(warpedRightLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
+        warped_right_lane_corners = np.vstack([rightX, y_range]).T
+        right_lane_corners = cv2.perspectiveTransform(warped_right_lane_corners.reshape(-1, 1, 2), warp_transform_inv).reshape(-1, 2)
 
-    detectionOverlap = np.zeros_like(image)
-    if leftLaneCorners is not None and rightLaneCorners is not None:
-        detectionOverlap = cv2.fillPoly(detectionOverlap, np.vstack([leftLaneCorners, rightLaneCorners[::-1]]).astype(np.int32).reshape(1, -1, 2), color=[0, 255, 0])
-        detectionOverlap = cv2.polylines(detectionOverlap, leftLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[255, 0, 0], thickness=3)
-        detectionOverlap = cv2.polylines(detectionOverlap, rightLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[0, 0, 255], thickness=3)
+    detection_overlap = np.zeros_like(image)
+    if left_lane_corners is not None and right_lane_corners is not None:
+        detection_overlap = cv2.fillPoly(detection_overlap, np.vstack([left_lane_corners, right_lane_corners[::-1]]).astype(np.int32).reshape(1, -1, 2), color=[0, 255, 0])
+        detection_overlap = cv2.polylines(detection_overlap, left_lane_corners.astype(np.int32).reshape(1, -1, 2), False, color=[255, 0, 0], thickness=3)
+        detection_overlap = cv2.polylines(detection_overlap, right_lane_corners.astype(np.int32).reshape(1, -1, 2), False, color=[0, 0, 255], thickness=3)
 
-    overlayImage = cv2.addWeighted(image, 1.0, detectionOverlap, 0.5, 0.0)
+    overlay_image = cv2.addWeighted(image, 1.0, detection_overlap, 0.5, 0.0)
 
     if show:
         plt.clf()
-        plt.imshow(overlayImage)
-        # plt.plot(leftLaneCorners[:, 0], leftLaneCorners[:, 1], 'r')
-        # plt.plot(rightLaneCorners[:, 0], rightLaneCorners[:, 1], 'b')
+        plt.imshow(overlay_image)
+        # plt.plot(left_lane_corners[:, 0], left_lane_corners[:, 1], 'r')
+        # plt.plot(right_lane_corners[:, 0], right_lane_corners[:, 1], 'b')
         plt.show(block=False)
         embed()
 
-    return overlayImage
+    return overlay_image
 
 
 def lane_detections(images, KK, Kc, output_path, show=False):
-    for index, (imageName, image) in enumerate(images.items()):
-        resultImage = lane_detection(imageName, image, KK, Kc, show=show)
-        result_image_path = os.path.join(output_path, imageName + '.jpg')
-        cv2.imwrite(result_image_path, cv2.cvtColor(resultImage, cv2.COLOR_BGR2RGB))
+    for index, (image_name, image) in enumerate(images.items()):
+        result_image = lane_detection(image_name, image, KK, Kc, show=show)
+        result_image_path = os.path.join(output_path, image_name + '.jpg')
+        cv2.imwrite(result_image_path, cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
 
 
 def lane_detection_in_video(KK, Kc, input_path, video_name, output_path):
@@ -338,14 +338,14 @@ def lane_detection_in_video(KK, Kc, input_path, video_name, output_path):
 if __name__ == '__main__':
     plt.ion()
     script_path = os.path.dirname(os.path.realpath(__file__))
-    testImagePath = os.path.join(script_path, '..', 'test_images')
-    images = load_images(testImagePath)
+    test_image_input_path = os.path.join(script_path, '..', 'test_images')
+    images = load_images(test_image_input_path)
 
-    cameraDataPath = os.path.join(script_path, '..', 'camera.json')
+    camera_cal_image_path = os.path.join(script_path, '..', 'camera.json')
     video_path = os.path.join(script_path, '..')
 
     import ujson
-    with open(cameraDataPath, 'r') as f:
+    with open(camera_cal_image_path, 'r') as f:
         data = ujson.load(f)
         KK = np.array(data['KK'])
         Kc = np.array(data['Kc'])
