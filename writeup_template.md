@@ -80,7 +80,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 6. Final result output
 
-![Example of final result][output_images/straight_lines1.jpg]
+![Example of final result][./output_images/straight_lines1.jpg]
 
 ---
 
