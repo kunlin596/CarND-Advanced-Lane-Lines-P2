@@ -357,7 +357,7 @@ if __name__ == '__main__':
     lane_detections(images, KK, Kc, output_path=test_images_output_path, show=False)
 
     video_ouput_path = test_images_output_path
-    for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge.mp4']:
+    for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge_video.mp4']:
         lane_detection_in_video(KK, Kc, video_path, video_name, video_ouput_path)
 
     embed()
