@@ -40,6 +40,9 @@ WARPED_ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] / 4, 0],
                                 [IMAGE_SHAPE[1] * 3 / 4, IMAGE_SHAPE[0]],
                                 [IMAGE_SHAPE[1] * 3 / 4, 0]])
 
+Y_METER_PER_PIXEL = 30 / 720
+X_METER_PER_PIXEL = 3.7 / 700
+
 
 def get_homography():
     src = ROI_CORNERS
@@ -63,6 +66,19 @@ def load_images(imagePath):
 
 
 def search_lane(image, KK, windowSize=None, show=False):
+    """Search lane curve in warped image
+
+    Arguments:
+        image {[type]} -- [description]
+        KK {[type]} -- [description]
+
+    Keyword Arguments:
+        windowSize {[type]} -- [description] (default: {None})
+        show {bool} -- [description] (default: {False})
+
+    Returns:
+        [type] -- [description]
+    """
     if windowSize is None:
         windowSize = (100, 20)
 
@@ -176,7 +192,29 @@ def search_lane(image, KK, windowSize=None, show=False):
     return leftPoly, rightPoly
 
 
+def measure_curvature_pixels(poly, y_value):
+    """Measure lane curvature
+
+    Arguments:
+        poly {[type]} -- [description]
+        v_value {[type]} -- [description]
+    """
+    A = poly[0]
+    B = poly[1]
+    return (1 + (2 * A * y_value * B) ** 2) ** (1.5) / abs(2 * A)
+
+
 def lane_detection(imageName, image, KK, Kc, show=False):
+    """ Main lane detection function
+    Arguments:
+        imageName {[type]} -- [description]
+        image {[type]} -- [description]
+        KK {[type]} -- [description]
+        Kc {[type]} -- [description]
+
+    Keyword Arguments:
+        show {bool} -- [description] (default: {False})
+    """
     log.debug('current imageName=%s', imageName)
 
     hlsImage = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
@@ -232,54 +270,94 @@ def lane_detection(imageName, image, KK, Kc, show=False):
     # Sliding window lane searching
     leftPoly, rightPoly = search_lane(warpedCannyImage, KK)
 
+    warpTransformInv = np.linalg.inv(warpTransform)
     yRange = np.arange(0, warpedImage.shape[0])
+    leftLaneCorners = None
     if leftPoly is not None:
         leftX = np.polyval(leftPoly, yRange)
+        left_curvature = measure_curvature_pixels(leftPoly, warpTransform.shape[0])
+        log.debug('left_curvature=%s', left_curvature)
+        warpedLeftLaneCorners = np.vstack([leftX, yRange]).T
+        leftLaneCorners = cv2.perspectiveTransform(warpedLeftLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
+
+    rightLaneCorners = None
     if rightPoly is not None:
         rightX = np.polyval(rightPoly, yRange)
-
-    warpedLeftLaneCorners = np.vstack([leftX, yRange]).T
-    warpedRightLaneCorners = np.vstack([rightX, yRange]).T
-
-    warpTransformInv = np.linalg.inv(warpTransform)
-    leftLaneCorners = cv2.perspectiveTransform(warpedLeftLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
-    rightLaneCorners = cv2.perspectiveTransform(warpedRightLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
+        right_curvature = measure_curvature_pixels(rightPoly, warpTransform.shape[0])
+        log.debug('right_curvature=%s', right_curvature)
+        warpedRightLaneCorners = np.vstack([rightX, yRange]).T
+        rightLaneCorners = cv2.perspectiveTransform(warpedRightLaneCorners.reshape(-1, 1, 2), warpTransformInv).reshape(-1, 2)
 
     detectionOverlap = np.zeros_like(image)
-    detectionOverlap = cv2.fillPoly(detectionOverlap, np.vstack([leftLaneCorners, rightLaneCorners[::-1]]).astype(np.int32).reshape(1, -1, 2), color=[0, 255, 0])
-    detectionOverlap = cv2.polylines(detectionOverlap, leftLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[255, 0, 0], thickness=3)
-    detectionOverlap = cv2.polylines(detectionOverlap, rightLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[0, 0, 255], thickness=3)
+    if leftLaneCorners is not None and rightLaneCorners is not None:
+        detectionOverlap = cv2.fillPoly(detectionOverlap, np.vstack([leftLaneCorners, rightLaneCorners[::-1]]).astype(np.int32).reshape(1, -1, 2), color=[0, 255, 0])
+        detectionOverlap = cv2.polylines(detectionOverlap, leftLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[255, 0, 0], thickness=3)
+        detectionOverlap = cv2.polylines(detectionOverlap, rightLaneCorners.astype(np.int32).reshape(1, -1, 2), False, color=[0, 0, 255], thickness=3)
 
     overlayImage = cv2.addWeighted(image, 1.0, detectionOverlap, 0.5, 0.0)
 
-    show = True
     if show:
         plt.clf()
         plt.imshow(overlayImage)
         # plt.plot(leftLaneCorners[:, 0], leftLaneCorners[:, 1], 'r')
         # plt.plot(rightLaneCorners[:, 0], rightLaneCorners[:, 1], 'b')
-        plt.pause(0.001)
         plt.show(block=False)
         embed()
 
+    return overlayImage
 
-def lane_detections(images, KK, Kc, show=False):
+
+def lane_detections(images, KK, Kc, output_path, show=False):
     for index, (imageName, image) in enumerate(images.items()):
-        lane_detection(imageName, image, KK, Kc)
+        resultImage = lane_detection(imageName, image, KK, Kc, show=show)
+        result_image_path = os.path.join(output_path, imageName + '.jpg')
+        cv2.imwrite(result_image_path, cv2.cvtColor(resultImage, cv2.COLOR_BGR2RGB))
+
+
+def lane_detection_in_video(KK, Kc, input_path, video_name, output_path):
+    cap = cv2.VideoCapture(os.path.join(input_path, video_name))
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    writer = cv2.VideoWriter(os.path.join(output_path, video_name), fourcc, 30.0, (frame_width, frame_height))
+
+    frame_id = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        result_image = lane_detection('%s_%s' % (video_name, frame_id), frame, KK, Kc)
+        frame_id += 1
+        writer.write(result_image)
+
+    cap.release()
+    writer.release()
 
 
 if __name__ == '__main__':
     plt.ion()
-    sciptPath = os.path.dirname(os.path.realpath(__file__))
-    testImagePath = os.path.join(sciptPath, '..', 'test_images')
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    testImagePath = os.path.join(script_path, '..', 'test_images')
     images = load_images(testImagePath)
 
-    cameraDataPath = os.path.join(sciptPath, '..', 'camera.json')
+    cameraDataPath = os.path.join(script_path, '..', 'camera.json')
+    video_path = os.path.join(script_path, '..')
+
     import ujson
     with open(cameraDataPath, 'r') as f:
         data = ujson.load(f)
         KK = np.array(data['KK'])
         Kc = np.array(data['Kc'])
 
-    lane_detections(images, KK, Kc)
+    test_images_output_path = os.path.join(script_path, '../output_images')
+    if not os.path.exists(test_images_output_path):
+        os.mkdir(test_images_output_path)
+
+    lane_detections(images, KK, Kc, output_path=test_images_output_path, show=False)
+
+    video_ouput_path = test_images_output_path
+    for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge.mp4']:
+        lane_detection_in_video(KK, Kc, video_path, video_name, video_ouput_path)
+
     embed()
