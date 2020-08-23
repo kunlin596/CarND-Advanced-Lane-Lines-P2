@@ -103,7 +103,7 @@ def search_lane(image, KK, windowSize=None, show=False):
         minXY = corners.min(axis=0)
         maxXY = corners.max(axis=0)
         patch = image[minXY[1]: maxXY[1], minXY[0]: maxXY[0]]
-        return patch, minXY, maxXY, corners
+        return patch, minXY, corners
 
     leftCenters = []
     rightCenters = []
@@ -117,8 +117,8 @@ def search_lane(image, KK, windowSize=None, show=False):
     currentWindowSize = (200, 20)
 
     while currentY > 0:
-        leftPatch, topLeftCornerLeft, bottomRightCornerLeft, leftCorners = get_window_patch(currentLeftX, currentY, currentWindowSize)
-        rightPatch, topLeftCornerRight, bottomRightCornerRight, rightCorners = get_window_patch(currentRightX, currentY, currentWindowSize)
+        leftPatch, topLeftCornerLeft, leftCorners = get_window_patch(currentLeftX, currentY, currentWindowSize)
+        rightPatch, topLeftCornerRight, rightCorners = get_window_patch(currentRightX, currentY, currentWindowSize)
 
         validX = np.nonzero(leftPatch)[1]
         x = sorted(validX)[len(validX) // 2] if len(validX) > 5 else np.nan
