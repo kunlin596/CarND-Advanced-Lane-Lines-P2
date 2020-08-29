@@ -223,12 +223,17 @@ def lane_detection(image_name, image, KK, Kc, show=False, output_images=False):
     if not show:
         plt.ioff()
     plt.figure(figsize=(30, 20))
-    plt.suptitle('Channel comparison of difference color transforms', fontsize=32)
+    plt.suptitle('Channel comparison of difference color spaces', fontsize=32)
     for i in range(3):
-        plt.subplot(2, 3, i + 1)
+        plt.subplot(3, 3, i + 1)
+        plt.title('rgb channel[%d]' % i)
+        plt.imshow(image[:, :, i], cmap='gray')
+
+        plt.subplot(3, 3, i + 1 + 3)
         plt.title('hls channel[%d]' % i)
         plt.imshow(hls_image[:, :, i], cmap='gray')
-        plt.subplot(2, 3, i + 1 + 3)
+
+        plt.subplot(3, 3, i + 1 + 6)
         plt.imshow(hsv_image[:, :, i], cmap='gray')
         plt.title('hsv channel[%d]' % i)
     plt.tight_layout()
