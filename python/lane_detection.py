@@ -204,7 +204,7 @@ def measure_curvature_pixels(poly, y_value):
     return (1 + (2 * A * y_value * B) ** 2) ** (1.5) / abs(2 * A)
 
 
-def lane_detection(image_name, image, KK, Kc, show=False):
+def lane_detection(image_name, image, KK, Kc, show=False, output_images=False):
     """ Main lane detection function
     Arguments:
         image_name {[type]} -- [description]
@@ -220,12 +220,23 @@ def lane_detection(image_name, image, KK, Kc, show=False):
     hls_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     hsv_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
+    if not show:
+        plt.ioff()
+    plt.figure(figsize=(30, 20))
+    plt.suptitle('Channel comparison of difference color transforms', fontsize=32)
+    for i in range(3):
+        plt.subplot(2, 3, i + 1)
+        plt.title('hls channel[%d]' % i)
+        plt.imshow(hls_image[:, :, i], cmap='gray')
+        plt.subplot(2, 3, i + 1 + 3)
+        plt.imshow(hsv_image[:, :, i], cmap='gray')
+        plt.title('hsv channel[%d]' % i)
+    plt.tight_layout()
     if show:
-        for i in range(3):
-            plt.subplot(2, 3, i + 1)
-            plt.imshow(hls_image[:, :, i], cmap='gray')
-            plt.subplot(2, 3, i + 1 + 3)
-            plt.imshow(hsv_image[:, :, i], cmap='gray')
+        plt.show(block=False)
+
+    if output_images:
+        plt.savefig('output_images/%s_color_transform_comparison.jpg' % image_name)
 
     # Use S channel in HSL image since the lane color is more out-standing than others
     lane_image = hls_image[:, :, 2]
@@ -247,25 +258,40 @@ def lane_detection(image_name, image, KK, Kc, show=False):
     warped_canny_image = cv2.warpPerspective(canny_image, warp_transform, (canny_image.shape[1], canny_image.shape[0]))
     warped_image = cv2.warpPerspective(image, warp_transform, (canny_image.shape[1], canny_image.shape[0]))
 
+    if not show:
+        plt.ioff()
+
+    plt.figure(figsize=(30, 20))
+    plt.suptitle('Warped edge images', fontsize=32)
+
+    plt.subplot(231)
+    plt.title('Original color image with ROI corners')
+    image2 = cv2.polylines(image, (ROI_CORNERS + 0.5).astype(np.int32).reshape(1, -1, 2), True, (255, 0, 0), 2)
+    plt.imshow(image2)
+
+    plt.subplot(232)
+    plt.title('Sobel image (visualization only, not used)')
+    plt.imshow(sobel_image, cmap='gray')
+
+    plt.subplot(233)
+    plt.title('Canne image')
+    plt.imshow(canny_image, cmap='gray')
+
+    plt.subplot(234)
+    plt.title('Warped canny image')
+    plt.imshow(warped_canny_image, cmap='gray')
+
+    plt.subplot(235)
+    plt.title('Warp color image with warped ROI corners')
+    warped_image2 = cv2.polylines(warped_image, (WARPED_ROI_CORNERS + 0.5).astype(np.int32).reshape(1, -1, 2), True, (255, 0, 0), 2)
+    plt.imshow(warped_image2)
+
+    plt.tight_layout()
     if show:
-        plt.figure()
-        plt.ion()
-        plt.subplot(321)
-        plt.imshow(image)
-        plt.plot(ROI_CORNERS[:, 0], ROI_CORNERS[:, 1], 'r.')
-        plt.subplot(322)
-        plt.imshow(warped_image)
-        plt.plot(WARPED_ROI_CORNERS[:, 0], WARPED_ROI_CORNERS[:, 1], 'r.')
-        plt.subplot(323)
-        plt.imshow(canny_image, cmap='gray')
-        plt.subplot(324)
-        plt.imshow(warped_canny_image, cmap='gray')
-        plt.subplot(325)
-        plt.imshow(sobel_image, cmap='gray')
-        plt.subplot(326)
-        plt.imshow(canny_image, cmap='gray')
-        plt.pause(0.001)
         plt.show(block=False)
+
+    if output_images:
+        plt.savefig('output_images/%s_edge_images.jpg' % image_name)
 
     # Sliding window lane searching
     left_poly, right_poly = search_lane(warped_canny_image, KK)
@@ -307,9 +333,9 @@ def lane_detection(image_name, image, KK, Kc, show=False):
     return overlay_image
 
 
-def lane_detections(images, KK, Kc, output_path, show=False):
+def lane_detections(images, KK, Kc, output_path, show=False, output_images=False):
     for index, (image_name, image) in enumerate(images.items()):
-        result_image = lane_detection(image_name, image, KK, Kc, show=show)
+        result_image = lane_detection(image_name, image, KK, Kc, show=show, output_images=output_images)
         result_image_path = os.path.join(output_path, image_name + '.jpg')
         cv2.imwrite(result_image_path, cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
 
@@ -339,7 +365,7 @@ if __name__ == '__main__':
     plt.ion()
     script_path = os.path.dirname(os.path.realpath(__file__))
     test_image_input_path = os.path.join(script_path, '..', 'test_images')
-    images = load_images(test_image_input_path)
+    test_images = load_images(test_image_input_path)
 
     camera_cal_image_path = os.path.join(script_path, '..', 'camera.json')
     video_path = os.path.join(script_path, '..')
@@ -354,10 +380,10 @@ if __name__ == '__main__':
     if not os.path.exists(test_images_output_path):
         os.mkdir(test_images_output_path)
 
-    lane_detections(images, KK, Kc, output_path=test_images_output_path, show=False)
+    lane_detections(test_images, KK, Kc, output_path=test_images_output_path, show=False, output_images=True)
 
-    video_ouput_path = test_images_output_path
-    for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge_video.mp4']:
-        lane_detection_in_video(KK, Kc, video_path, video_name, video_ouput_path)
+    # video_ouput_path = test_images_output_path
+    # for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge_video.mp4']:
+    #     lane_detection_in_video(KK, Kc, video_path, video_name, video_ouput_path)
 
     embed()
