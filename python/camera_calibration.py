@@ -52,25 +52,23 @@ def load_images(imagePath):
     return images
 
 
-def detect_chess_board_corners(images, show=False):
+def detect_chess_board_corners(images, output_name, show=False):
     imagePoints = {}
     nImages = len(images)
 
-    if show:
-        nCols = 5
-        nRows = int(np.round(nImages * 1.0 / nCols))
-        plt.subplots(nRows, nCols)
-        plt.subplots_adjust(left=0.01, bottom=0.01, right=0.99, top=0.99, wspace=0.01, hspace=0.01)
+    if not show:
+        plt.ioff()
+
+    nCols = 5
+    nRows = int(np.round(nImages * 1.0 / nCols))
+    plt.figure(figsize=(30.0, 20.0))
+    plt.suptitle('Camera calibration - undistorted with detected pattern corners', fontsize=32)
 
     log.debug('found %d images', nImages)
     for index, (imageName, image) in enumerate(images.items()):
         if image is not None:
             grayimage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             ret, corners = cv2.findChessboardCorners(grayimage, (N_COLS, N_ROWS), None)
-
-            if show:
-                plt.subplot(nRows, nCols, index + 1)
-                plt.imshow(grayimage, cmap='gray')
 
             if not ret:
                 log.error('Chessborard corners not found in %s', imageName)
@@ -80,20 +78,24 @@ def detect_chess_board_corners(images, show=False):
             imagePoints[imageName] = corners
             log.debug('detected corners shape, %s', corners.shape)
 
+            plt.subplot(nRows, nCols, index + 1)
+            plt.imshow(image)
+            plt.plot(corners[:, 0], corners[:, 1], marker='.', markersize=3, linewidth=0, color='red')
             if show:
-                plt.plot(corners[:, 0], corners[:, 1], marker='.', markersize=5, linewidth=0, color='red')
                 plt.show(block=False)
 
     if show:
-        plt.tight_layout()
         embed()
+
+    plt.tight_layout()
+    plt.savefig('output_images/%s.png' % output_name)
 
     return imagePoints
 
 
 def calibrate_camera(imagePath, show=False):
     images = load_images(imagePath)
-    imagePoints = detect_chess_board_corners(images, show=show)
+    imagePoints = detect_chess_board_corners(images, output_name='undistort_images_with_detected_corners', show=show)
     imagePointsValues = np.array(list(imagePoints.values()))
     objectPoints = _generate_object_points(nImages=len(imagePointsValues))
     assert(imagePointsValues.shape[:-2] == objectPoints.shape[:-2])
@@ -148,6 +150,6 @@ if __name__ == '__main__':
         ujson.dump(data, f, indent=2)
 
     # For testing
-    # images = load_images(calibImagePath)
-    # undistortedImages = undistort_images(images, KK, Kc, show=False)
+    images = load_images(calibImagePath)
+    undistortedImages = undistort_images(images, KK, Kc, show=False)
     # embed()
