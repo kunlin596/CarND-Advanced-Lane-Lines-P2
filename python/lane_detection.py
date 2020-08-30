@@ -331,7 +331,7 @@ def preprocess_image(image, image_name, show, output_images=False):
             plt.ioff()
 
         plt.figure(figsize=(30, 20))
-        plt.suptitle('Warped edge images', fontsize=32)
+        plt.suptitle('Warped images', fontsize=32)
 
         plt.subplot(231)
         plt.title('Original color image with ROI corners')
@@ -339,13 +339,12 @@ def preprocess_image(image, image_name, show, output_images=False):
         plt.imshow(image2)
 
         plt.subplot(232)
-        plt.title('Warped image')
+        plt.title('Warped color image')
         plt.imshow(warped_image)
 
         plt.subplot(233)
-        plt.title('HLS S channel thresholded')
+        plt.title('Warped thresholded image')
         plt.imshow(lane_image, cmap='gray')
-        # plt.imshow(warped_sobel_mask, cmap='gray')
 
         plt.subplot(234)
         plt.title('Sobel grad x')
