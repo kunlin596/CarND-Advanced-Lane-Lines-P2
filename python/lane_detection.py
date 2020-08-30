@@ -54,12 +54,6 @@ Y_METER_PER_PIXEL = 30 / 720
 X_METER_PER_PIXEL = 3.7 / 700
 
 
-def get_homography():
-    src = ROI_CORNERS
-    dst = WARPED_ROI_CORNERS
-    return cv2.getPerspectiveTransform(src, dst)
-
-
 def load_images(imagePath):
     if not os.path.exists(imagePath):
         raise Exception('%s is not valid.' % (imagePath))
@@ -237,6 +231,10 @@ def search_lane_by_sliding_window(image_name, image, KK, window_size=None, show=
 
 
 def search_lane_by_previous_result(image_name, warped_image, left_poly, right_poly, search_margin=100, show=False, output_images=False):
+
+    if left_poly is None or right_poly is None:
+        return None, None
+
     left_poly_line_x = np.linspace(0, IMAGE_SHAPE[0])
     left_poly_line_y = np.polyval(left_poly, left_poly_line_x)
     left_poly_line = np.vstack([left_poly_line_y, left_poly_line_x]).T
