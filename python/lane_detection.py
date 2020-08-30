@@ -340,17 +340,17 @@ def preprocess_image(image, image_name, show, output_images=False):
         plt.close()
 
     # Use H and S channel in HSL image since the lane color is more out-standing than others
+    l_thres = 200
     s_thres = 125
-    h_thres = 50
-    l_thres = 210
+    # h_thres = 100
     b_thres = 125
 
-    hls_h_mask = hls_image[:, :, 0] < h_thres
+    # hls_h_mask = hls_image[:, :, 0] < h_thres
     hls_l_mask = hls_image[:, :, 1] > l_thres
     hls_s_mask = hls_image[:, :, 2] > s_thres
     lab_b_mask = lab_image[:, :, 2] > b_thres
 
-    lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)).astype(np.uint8) * 255
+    lane_image = (hls_l_mask | (hls_s_mask & lab_b_mask)).astype(np.uint8) * 255
 
     # Undistort image
     kernel_size = 3
