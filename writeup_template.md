@@ -81,30 +81,60 @@ Here is an undistorted image using camera KK and Kc in `camera.json`.
 
 ![Example of image undistortion result](./output_images/camera_calibration_example_2.jpg)
 
-#### 2. Preprocessing
-The purpose of this step is to find the proper binary image for later processing.
-This step is implemented in `lane_detecion`.
+
+#### 2. Image warping
+
+Image warping is implemented in function `preprocess_image`. Source ROI corners are defined as `ROI_CORNERS` and dest (warped) ROI corners are defined as `WARPED_ROI_CORNERS`.
+
+```py
+IMAGE_SHAPE = (720, 1280)
+ROI_CORNERS = np.float32([(575, 464),
+                          (707, 464),
+                          (258, 682),
+                          (1049, 682)])
+WARPED_ROI_CORNERS = np.float32([(450, 0),
+                                 (IMAGE_SHAPE[1] - 450, 0),
+                                 (450, IMAGE_SHAPE[0]),
+                                 (IMAGE_SHAPE[1] - 450, IMAGE_SHAPE[0])])
+```
+
+Homography is found by `cv2.getPerspectiveTransform`.
+
+![Warped images](./output_images/straight_lines1_edge_images.jpg)
+
+And a in the sedon
+
+#### 3. Color transformations and masking
+The purpose of this step is to find the proper binary image for later processing. and the input image is already warped.
+
+This step is implemented in function `preprocess_image`.
 
 The first step is to examine the color spaces to see if we can find a channel of a particular color space where lane line is visually outstanding.
 
 ![Example of color spaces](./output_images/straight_lines1_color_transform_comparison.jpg)
 
+Depending on the obsevation in the color channels listed above, the processing logic is defined as
 
-#### 3. Image warping
+```py
+# Use H and S channel in HSL image since the lane color is more out-standing than others
+s_thres = 125
+h_thres = 50
+l_thres = 210
+b_thres = 125
 
-Later in the function `lane_detection` after color transformations, I have used a function called `get_homography` to get the homogray between the lane ROI corners in the original perspective image and a target top view warped image.
+hls_h_mask = hls_image[:, :, 0] < h_thres
+hls_l_mask = hls_image[:, :, 1] > l_thres
+hls_s_mask = hls_image[:, :, 2] > s_thres
+lab_b_mask = lab_image[:, :, 2] > b_thres
 
-Source ROI corners are defined as `ROI_CORNERS` and dest (warped) ROI corners are defined as `WARPED_ROI_CORNERS` and used in `get_homograpghy`.
-
-Then I apply this warping transform to canny image to get a warped image, where the main lane searching function will run on.
-
-TODO: Provide images.
+lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)).astype(np.uint8) * 255
+```
 
 #### 4. Lane searching and polynomial fitting
 
 It's implemeted in function `search_lane`.
 
-TODO: Provide more details and images.
+![Example of color spaces](./output_images/straight_lines1_lane_searching.jpg)
 
 #### 5. Curvature calculation
 
