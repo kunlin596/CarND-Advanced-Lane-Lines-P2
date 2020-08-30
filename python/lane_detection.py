@@ -289,7 +289,7 @@ def preprocess_image(image, image_name, show, output_images=False):
             plt.imshow(luv_image[:, :, i], cmap='gray')
             plt.title('luv channel[%d]' % i)
 
-        plt.tight_layout()
+        # plt.tight_layout()
         if show:
             plt.show(block=False)
         plt.savefig('output_images/%s_color_transform_comparison.jpg' % image_name)
@@ -359,7 +359,7 @@ def preprocess_image(image, image_name, show, output_images=False):
         plt.title('Sobel thresholded mask')
         plt.imshow(sobel_mag_mask, cmap='gray')
 
-        plt.tight_layout()
+        # plt.tight_layout()
         if show:
             plt.show(block=False)
 
