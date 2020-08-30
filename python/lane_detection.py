@@ -489,21 +489,25 @@ def lane_detection_in_video(KK, Kc, input_path, video_name, output_path, output_
     writer = cv2.VideoWriter(os.path.join(output_path, video_name), fourcc, 30.0, (frame_width, frame_height))
 
     frame_id = 0
-    left_x, right_x = None, None
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    left_poly, right_poly = None, None
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        result_image, left_x, right_x = lane_detection('%s_%s' % (video_name, frame_id), frame, KK, Kc,
-                                                       left_x=left_x, right_x=right_x,
-                                                       output_images=output_images)
-        frame_id += 1
-        writer.write(cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
-
-    cap.release()
-    writer.release()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            result_image, left_poly, right_poly = lane_detection('%s_%s' % (video_name, frame_id), frame, KK, Kc,
+                                                                 left_poly=left_poly, right_poly=right_poly,
+                                                                 output_images=output_images)
+            writer.write(cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
+            frame_id += 1
+    except Exception as e:
+        log.exception(e)
+        embed()
+    finally:
+        cap.release()
+        writer.release()
 
 
 if __name__ == '__main__':
@@ -528,6 +532,6 @@ if __name__ == '__main__':
     lane_detections(test_images, KK, Kc, output_path=test_images_output_path, show=False, output_images=True)
 
     video_ouput_path = test_images_output_path
-    # lane_detection_in_video(KK, Kc, video_path, 'project_video.mp4', video_ouput_path)
-    # lane_detection_in_video(KK, Kc, video_path, 'challenge_video.mp4', video_ouput_path)
-    # lane_detection_in_video(KK, Kc, video_path, 'harder_challenge_video', video_ouput_path)
+    lane_detection_in_video(KK, Kc, video_path, 'project_video.mp4', video_ouput_path)
+    lane_detection_in_video(KK, Kc, video_path, 'challenge_video.mp4', video_ouput_path)
+    lane_detection_in_video(KK, Kc, video_path, 'harder_challenge_video', video_ouput_path)
