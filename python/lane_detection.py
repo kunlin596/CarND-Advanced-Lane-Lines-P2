@@ -473,8 +473,7 @@ if __name__ == '__main__':
 
     lane_detections(test_images, KK, Kc, output_path=test_images_output_path, show=False, output_images=True)
 
-    # video_ouput_path = test_images_output_path
-    # for video_name in ['project_video.mp4', 'challenge_video.mp4', 'harder_challenge_video.mp4']:
-    #     lane_detection_in_video(KK, Kc, video_path, video_name, video_ouput_path)
-
-    embed()
+    video_ouput_path = test_images_output_path
+    lane_detection_in_video(KK, Kc, video_path, 'project_video.mp4', video_ouput_path)
+    lane_detection_in_video(KK, Kc, video_path, 'challenge_video.mp4', video_ouput_path, output_images=True)
+    lane_detection_in_video(KK, Kc, video_path, 'harder_challenge_video', video_ouput_path)
