@@ -34,7 +34,7 @@ TODO: Generate result image and provide image links.
 
 After I got the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
 
-![Example of camera calibration result](./output_images/camera_calibration_result_example.jpg)
+![Example of camera calibration result](./output_images/camera_calibrationexample.jpg)
 
 I save the camera KK and Kc in a file called `camera.json` and will use it the actual lane detection pipeline.
 
