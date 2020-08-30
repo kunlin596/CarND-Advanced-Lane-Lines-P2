@@ -125,10 +125,10 @@ def get_camera_transforms(rvecs, tvecs):
 
 
 def undistort_images(images, KK, Kc, show=False):
-    undistortedImages = []
+    undistortedImages = {}
     for name, image in images.items():
         undistortedImage = cv2.undistort(image, cameraMatrix=KK, distCoeffs=Kc)
-        undistortedImages.append(undistortedImage)
+        undistortedImages[name] = undistortedImage
         if show:
             plt.imshow(undistortedImage)
             plt.pause(0.3)
@@ -152,4 +152,15 @@ if __name__ == '__main__':
     # For testing
     images = load_images(calibImagePath)
     undistortedImages = undistort_images(images, KK, Kc, show=False)
-    # embed()
+
+    plt.ioff()
+    plt.figure()
+    plt.suptitle('Camera calibration result example')
+    plt.subplot(121)
+    plt.title('Before calibration')
+    plt.imshow(images['calibration1'])
+    plt.subplot(122)
+    plt.title('After calibration')
+    plt.tight_layout()
+    plt.imshow(undistortedImages['calibration1'])
+    plt.savefig('./output_images/camera_calibration_example.jpg')
