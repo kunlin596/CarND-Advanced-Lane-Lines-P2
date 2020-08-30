@@ -32,11 +32,46 @@ Then the final step is to feed the obejct points and images points into `cv2.cal
 
 TODO: Generate result image and provide image links.
 
-After I git the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
+After I got the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
 
-TODO: Generate result image and provide image links.
+![Example of camera calibration result][./output_images/camera_calibration_result_example.jpg]
 
 I save the camera KK and Kc in a file called `camera.json` and will use it the actual lane detection pipeline.
+
+Camera matrix json
+```json
+{
+ "KK": [
+  [
+   484.3902884693779,
+   0.0,
+   359.50000343668137
+  ],
+  [
+   0.0,
+   730.5665190852465,
+   639.4999981458845
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "Kc": [
+  [
+   -0.04327892605564115,
+   0.00008322703351661759,
+   -0.008936257678709005,
+   0.024703269877233883,
+   2.5638661810637675e-7
+  ]
+ ]
+}
+```
+
+![All images used for calibration with detected pattern corners drawn][./output_images/undistort_images_with_detected_corners.png]
+
 
 ### Pipeline (single images)
 
@@ -80,7 +115,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 6. Final result output
 
-![Example of final result][./output_images/straight_lines1.jpg]
+![Example of final result][./output_images/straight_lines1_result.jpg]
 
 ---
 
