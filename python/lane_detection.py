@@ -278,7 +278,7 @@ def search_lane_by_previous_result(image_name, warped_image, left_poly, right_po
     return left_poly, right_poly
 
 
-def measure_curvature_pixels(poly, y_value):
+def measure_curvature(poly, y_value):
     """Measure lane curvature
 
     Arguments:
@@ -287,7 +287,7 @@ def measure_curvature_pixels(poly, y_value):
     """
     A = poly[0]
     B = poly[1]
-    return (1 + (2 * A * y_value * B) ** 2) ** (1.5) / abs(2 * A)
+    return (1 + (2 * A * y_value * Y_METER_PER_PIXEL + B) ** 2) ** 1.5 / np.abs(2 * A)
 
 
 def preprocess_image(image, image_name, show, output_images=False):
