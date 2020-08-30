@@ -340,8 +340,7 @@ def preprocess_image(image, image_name, show, output_images=False):
     # Use H and S channel in HSL image since the lane color is more out-standing than others
     l_thres = 200
     s_thres = 125
-    # h_thres = 100
-    b_thres = 125
+    b_thres = 145
 
     # hls_h_mask = hls_image[:, :, 0] < h_thres
     hls_l_mask = hls_image[:, :, 1] > l_thres
