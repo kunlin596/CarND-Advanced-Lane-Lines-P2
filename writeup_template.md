@@ -30,8 +30,6 @@ Then I load the images using `load_images` given `image_path` to read all of the
 
 Then the final step is to feed the obejct points and images points into `cv2.calibrateCamera` to get the final camera matrix `KK` and distortion coefficents `Kc`.
 
-TODO: Generate result image and provide image links.
-
 After I got the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
 
 ![Example of camera calibration result](./output_images/camera_calibration_example.jpg)
@@ -81,7 +79,7 @@ All related code of the lane detection pipeline is located in `python/lane_detec
 
 Here is an undistorted image using camera KK and Kc in `camera.json`.
 
-TODO: Provide undistorted image
+![Example of image undistortion result](./output_images/camera_calibration_example_2.jpg)
 
 #### 2. Preprocessing
 The purpose of this step is to find the proper binary image for later processing.
