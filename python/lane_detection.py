@@ -75,7 +75,7 @@ def load_images(imagePath):
     return images
 
 
-def search_lane(image_name, image, KK, window_size=None, show=False, output_images=False):
+def search_lane(image_name, image, KK, window_size=None, left_x=None, right_x=None, show=False, output_images=False):
     """Search lane curve in warped image
 
     Arguments:
@@ -99,29 +99,30 @@ def search_lane(image_name, image, KK, window_size=None, show=False, output_imag
     image[:, :350] = 0
     image[:, IMAGE_SHAPE[1] - 350:] = 0
 
-    y, x = np.nonzero(image[image.shape[0] // 2:, :])
-    bins = int(image.shape[1] / 10 + 0.5)
-    h, edges = np.histogram(x, bins=bins)
+    if left_x is None and right_x is None:
+        y, x = np.nonzero(image[image.shape[0] // 2:, :])
+        bins = int(image.shape[1] / 10 + 0.5)
+        h, edges = np.histogram(x, bins=bins)
 
-    median_index = len(h) // 2
-    left_max_bin = np.argmax(h[:median_index])
-    left_max = h[:median_index].max()
-    right_max_bin = np.argmax(h[median_index:]) + median_index
-    right_max = h[median_index:].max()
+        median_index = len(h) // 2
+        left_max_bin = np.argmax(h[:median_index])
+        left_max = h[:median_index].max()
+        right_max_bin = np.argmax(h[median_index:]) + median_index
+        right_max = h[median_index:].max()
 
-    # This value should be computed using camera KK and extrinsics,
-    # here, it is estimated using straight_line.jpg
-    lane_width_in_pixel = 400
+        # This value should be computed using camera KK and extrinsics,
+        # here, it is estimated using straight_line.jpg
+        lane_width_in_pixel = 400
 
-    # The distance between the 2 peaks should be roughly `lane_width_in_pixel`,
-    # Use the 2nd peak is way small than the 1st peak, use 1st peak to fix the 2nd peak
-    left_x = edges[left_max_bin: left_max_bin + 1].mean()
-    right_x = edges[right_max_bin: right_max_bin + 1].mean()
+        # The distance between the 2 peaks should be roughly `lane_width_in_pixel`,
+        # Use the 2nd peak is way small than the 1st peak, use 1st peak to fix the 2nd peak
+        left_x = edges[left_max_bin: left_max_bin + 1].mean()
+        right_x = edges[right_max_bin: right_max_bin + 1].mean()
 
-    if right_max / left_max < 0.3:
-        right_x = left_x + lane_width_in_pixel
-    elif left_max / right_max < 0.3:
-        left_x = right_x - lane_width_in_pixel
+        if right_max / left_max < 0.3:
+            right_x = left_x + lane_width_in_pixel
+        elif left_max / right_max < 0.3:
+            left_x = right_x - lane_width_in_pixel
 
     #
     # Initialize initial left and right search locations
@@ -233,7 +234,7 @@ def search_lane(image_name, image, KK, window_size=None, show=False, output_imag
         plt.savefig('output_images/%s_lane_searching.jpg' % image_name)
         plt.close()
 
-    return left_poly, right_poly
+    return left_poly, right_poly, left_x, right_x
 
 
 def measure_curvature_pixels(poly, y_value):
@@ -368,7 +369,7 @@ def preprocess_image(image, image_name, show, output_images=False):
     return lane_image
 
 
-def lane_detection(image_name, image, KK, Kc, show=False, output_images=False):
+def lane_detection(image_name, image, KK, Kc, show=False, left_x=None, right_x=None, output_images=False):
     """ Main lane detection function
     Arguments:
         image_name {[type]} -- [description]
@@ -387,7 +388,7 @@ def lane_detection(image_name, image, KK, Kc, show=False, output_images=False):
     warped_image = preprocess_image(image, image_name, show, output_images)
 
     # Sliding window lane searching
-    left_poly, right_poly = search_lane(image_name, warped_image, KK, show=show, output_images=output_images)
+    left_poly, right_poly, left_x, right_x = search_lane(image_name, warped_image, KK, show=show, output_images=output_images)
 
     homography_inv = cv2.getPerspectiveTransform(WARPED_ROI_CORNERS, ROI_CORNERS)
     y_range = np.arange(0, warped_image.shape[0])
@@ -418,12 +419,12 @@ def lane_detection(image_name, image, KK, Kc, show=False, output_images=False):
             plt.imshow(overlay_image)
             plt.show(block=False)
 
-    return overlay_image
+    return overlay_image, left_x, right_x
 
 
 def lane_detections(images, KK, Kc, output_path, show=False, output_images=False):
     for index, (image_name, image) in enumerate(images.items()):
-        result_image = lane_detection(image_name, image, KK, Kc, show=show, output_images=output_images)
+        result_image, left_x, right_x = lane_detection(image_name, image, KK, Kc, show=show, output_images=output_images)
         result_image_path = os.path.join(output_path, image_name + '_result.jpg')
         if output_images:
             cv2.imwrite(result_image_path, cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
@@ -437,13 +438,16 @@ def lane_detection_in_video(KK, Kc, input_path, video_name, output_path, output_
     writer = cv2.VideoWriter(os.path.join(output_path, video_name), fourcc, 30.0, (frame_width, frame_height))
 
     frame_id = 0
+    left_x, right_x = None, None
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        result_image = lane_detection('%s_%s' % (video_name, frame_id), frame, KK, Kc, output_images=output_images)
+        result_image, left_x, right_x = lane_detection('%s_%s' % (video_name, frame_id), frame, KK, Kc,
+                                                       left_x=left_x, right_x=right_x,
+                                                       output_images=output_images)
         frame_id += 1
         writer.write(cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR))
 
