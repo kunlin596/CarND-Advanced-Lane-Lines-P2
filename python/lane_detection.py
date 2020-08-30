@@ -90,7 +90,14 @@ def search_lane(image_name, image, KK, window_size=None, show=False, output_imag
         [type] -- [description]
     """
     if window_size is None:
-        window_size = (100, 20)
+        window_size = (125, 40)
+
+    #
+    # Find out the starting position of both search windows
+    #
+
+    image[:, :350] = 0
+    image[:, IMAGE_SHAPE[1] - 350:] = 0
 
     y, x = np.nonzero(image[image.shape[0] // 2:, :])
     bins = int(image.shape[1] / 10 + 0.5)
