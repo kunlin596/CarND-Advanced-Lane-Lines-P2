@@ -420,34 +420,38 @@ def lane_detection(image_name, image, KK, Kc, show=False, left_poly=None, right_
     Keyword Arguments:
         show {bool} -- [description] (default: {False})
     """
-
-    homography = get_homography()
-
     image = cv2.undistort(image, KK, Kc)
 
     warped_image = preprocess_image(image, image_name, show, output_images)
 
     # Sliding window lane searching
-    if left_poly is None and right_poly is None:
-        left_poly, right_poly = search_lane_by_sliding_window(image_name, warped_image, KK, show=show, output_images=output_images)
-    else:
+    if left_poly is not None and right_poly is not None:
         left_poly, right_poly = search_lane_by_previous_result(image_name, warped_image, left_poly, right_poly, show=show, output_images=output_images)
+        if left_poly is None or right_poly is None:
+            left_poly, right_poly = search_lane_by_sliding_window(image_name, warped_image, KK, show=show, output_images=output_images)
+    else:
+        left_poly, right_poly = search_lane_by_sliding_window(image_name, warped_image, KK, show=show, output_images=output_images)
 
     homography_inv = cv2.getPerspectiveTransform(WARPED_ROI_CORNERS, ROI_CORNERS)
     y_range = np.arange(0, warped_image.shape[0])
     left_lane_corners = None
     if left_poly is not None:
-        left_curvature = measure_curvature_pixels(left_poly, homography.shape[0])
-        log.debug('left_curvature=%s', left_curvature)
+        left_curvature = measure_curvature(left_poly, image.shape[0])
+        log.debug('left_curvature=%s (m)', left_curvature)
         warped_left_lane_corners = np.vstack([np.polyval(left_poly, y_range), y_range]).T
         left_lane_corners = cv2.perspectiveTransform(warped_left_lane_corners.reshape(1, -1, 2), homography_inv).reshape(-1, 2)
 
     right_lane_corners = None
     if right_poly is not None:
-        right_curvature = measure_curvature_pixels(right_poly, homography.shape[0])
-        log.debug('right_curvature=%s', right_curvature)
+        right_curvature = measure_curvature(right_poly, image.shape[0])
+        log.debug('right_curvature=%s (m)', right_curvature)
         warped_right_lane_corners = np.vstack([np.polyval(right_poly, y_range), y_range]).T
         right_lane_corners = cv2.perspectiveTransform(warped_right_lane_corners.reshape(1, -1, 2), homography_inv).reshape(-1, 2)
+
+    bottom_left_x = np.polyval(left_poly, IMAGE_SHAPE[0])
+    bottom_right_x = np.polyval(right_poly, IMAGE_SHAPE[0])
+    deviate_from_lane_center = ((bottom_left_x + bottom_right_x) / 2.0 - IMAGE_SHAPE[1] // 2) * X_METER_PER_PIXEL
+    log.debug('deviate_from_lane_center=%.2f (m)', deviate_from_lane_center)
 
     detection_overlap = np.zeros_like(image)
     if left_lane_corners is not None and right_lane_corners is not None:
@@ -455,6 +459,10 @@ def lane_detection(image_name, image, KK, Kc, show=False, left_poly=None, right_
         detection_overlap = cv2.polylines(detection_overlap, left_lane_corners.astype(np.int32).reshape(1, -1, 2), False, color=[255, 0, 0], thickness=5)
         detection_overlap = cv2.polylines(detection_overlap, right_lane_corners.astype(np.int32).reshape(1, -1, 2), False, color=[0, 0, 255], thickness=5)
     overlay_image = cv2.addWeighted(image, 1.0, detection_overlap, 0.5, 0.0)
+    font_color = (255, 255, 255)
+    overlay_image = cv2.putText(overlay_image, 'frame_id: %s' % image_name, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, font_color, 1, cv2.LINE_AA)
+    overlay_image = cv2.putText(overlay_image, 'radius of curvature: %.3f (m)' % ((left_curvature + right_curvature) / 2.0), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, font_color, 1, cv2.LINE_AA)
+    overlay_image = cv2.putText(overlay_image, 'deviation from lane center: %.3f (m)' % deviate_from_lane_center, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, font_color, 1, cv2.LINE_AA)
 
     if output_images:
         if show:
