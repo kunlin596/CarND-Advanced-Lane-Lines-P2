@@ -29,16 +29,26 @@ matplotlib.use('TkAgg')
 
 # Hard coded for test images, these values are tweaked using test_images/straight_lines1.jpg
 IMAGE_SHAPE = (720, 1280)
-ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] / 2 - 62, IMAGE_SHAPE[0] / 2 + 100],
-                          [IMAGE_SHAPE[1] / 6 - 17, IMAGE_SHAPE[0]],
-                          [IMAGE_SHAPE[1] * 5 / 6 + 67, IMAGE_SHAPE[0]],
-                          [IMAGE_SHAPE[1] / 2 + 62, IMAGE_SHAPE[0] / 2 + 100]])
+# ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] * 0.5 - 65, IMAGE_SHAPE[0] / 2 + 100],
+#                           [IMAGE_SHAPE[1] * 0.2, IMAGE_SHAPE[0] - 50],
+#                           [IMAGE_SHAPE[1] * 0.8, IMAGE_SHAPE[0] - 50],
+#                           [IMAGE_SHAPE[1] * 0.5 + 65, IMAGE_SHAPE[0] / 2 + 100]])
 
 
-WARPED_ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] / 4, 0],
-                                [IMAGE_SHAPE[1] / 4, IMAGE_SHAPE[0]],
-                                [IMAGE_SHAPE[1] * 3 / 4, IMAGE_SHAPE[0]],
-                                [IMAGE_SHAPE[1] * 3 / 4, 0]])
+# WARPED_ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] * 0.2, 0],
+#                                  [IMAGE_SHAPE[1] * 0.2, IMAGE_SHAPE[0]],
+#                                  [IMAGE_SHAPE[1] * 0.8, IMAGE_SHAPE[0]],
+#                                  [IMAGE_SHAPE[1] * 0.8, 0]])
+
+
+ROI_CORNERS = np.float32([(575, 464),
+                          (707, 464),
+                          (258, 682),
+                          (1049, 682)])
+WARPED_ROI_CORNERS = np.float32([(450, 0),
+                                 (IMAGE_SHAPE[1] - 450, 0),
+                                 (450, IMAGE_SHAPE[0]),
+                                 (IMAGE_SHAPE[1] - 450, IMAGE_SHAPE[0])])
 
 Y_METER_PER_PIXEL = 30 / 720
 X_METER_PER_PIXEL = 3.7 / 700
@@ -47,7 +57,7 @@ X_METER_PER_PIXEL = 3.7 / 700
 def get_homography():
     src = ROI_CORNERS
     dst = WARPED_ROI_CORNERS
-    return cv2.findHomography(src, dst)
+    return cv2.getPerspectiveTransform(src, dst)
 
 
 def load_images(imagePath):
@@ -65,7 +75,7 @@ def load_images(imagePath):
     return images
 
 
-def search_lane(image, KK, window_size=None, show=False):
+def search_lane(image_name, image, KK, window_size=None, show=False, output_images=False):
     """Search lane curve in warped image
 
     Arguments:
