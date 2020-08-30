@@ -85,11 +85,10 @@ Here is an undistorted image using camera KK and Kc in `camera.json`.
 The purpose of this step is to find the proper binary image for later processing.
 This step is implemented in `lane_detecion`.
 
-The first step is to examine the color spaces to see if we can find a channel of a particular color space where lane line is visually outstanding. After plotting all hls and hlv color spaces, I chose saturation channel in hls image.
+The first step is to examine the color spaces to see if we can find a channel of a particular color space where lane line is visually outstanding.
 
-Then I used canny to find out the edges in canny images.
+![Example of color spaces](./output_images/straight_lines1_color_transform_comparison.jpg)
 
-TODO: Provide image links
 
 #### 3. Image warping
 
