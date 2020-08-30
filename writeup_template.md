@@ -34,7 +34,7 @@ TODO: Generate result image and provide image links.
 
 After I got the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
 
-![Example of camera calibration result][/output_images/camera_calibration_result_example.jpg]
+![Example of camera calibration result](./output_images/camera_calibration_result_example.jpg)
 
 I save the camera KK and Kc in a file called `camera.json` and will use it the actual lane detection pipeline.
 
@@ -70,7 +70,7 @@ Camera matrix json
 }
 ```
 
-![All images used for calibration with detected pattern corners drawn][/output_images/undistort_images_with_detected_corners.png]
+![All images used for calibration with detected pattern corners drawn](./output_images/undistort_images_with_detected_corners.png)
 
 
 ### Pipeline (single images)
@@ -115,7 +115,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 6. Final result output
 
-![Example of final result][/output_images/straight_lines1_result.jpg]
+![Example of final result](./output_images/straight_lines1_result.jpg)
 
 ---
 
@@ -123,7 +123,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 1. Final result outputs
 
-Here's a [link to my video result](/output_images/project_video.mp4)
+Here's a [link to my video result](./output_images/project_video.mp4)
 
 ---
 
