@@ -27,6 +27,9 @@ except ImportError as e:
 
 matplotlib.use('TkAgg')
 
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+OUTPUT_PATH = os.path.join(SCRIPT_PATH, '../CarND-Data/P2-advanced-lane-lines/outputs')
+
 # Hard coded for test images, these values are tweaked using test_images/straight_lines1.jpg
 IMAGE_SHAPE = (720, 1280)
 # ROI_CORNERS = np.float32([[IMAGE_SHAPE[1] * 0.5 - 65, IMAGE_SHAPE[0] / 2 + 100],
@@ -224,7 +227,7 @@ def search_lane_by_sliding_window(image_name, image, KK, window_size=None, show=
         if not show:
             plt.show(block=False)
 
-        plt.savefig('output_images/%s_lane_searching.jpg' % image_name)
+        plt.savefig(os.path.join(OUTPUT_PATH, '%s_lane_searching.jpg' % image_name))
         plt.close()
 
     return left_poly, right_poly
@@ -272,7 +275,7 @@ def search_lane_by_previous_result(image_name, warped_image, left_poly, right_po
         plt.plot(right_x, right_y, 'b.')
 
         plt.imshow(overlap, cmap='gray')
-        plt.savefig('./output_images/%s_search_lane_using previous_result.jpg' % image_name)
+        plt.savefig(os.path.join(OUTPUT_PATH, '%s_search_lane_using previous_result.jpg' % image_name))
         # plt.show(block=False)
 
     return left_poly, right_poly
@@ -334,7 +337,7 @@ def preprocess_image(image, image_name, show, output_images=False):
         # plt.tight_layout()
         if show:
             plt.show(block=False)
-        plt.savefig('output_images/%s_color_transform_comparison.jpg' % image_name)
+        plt.savefig(os.path.join(OUTPUT_PATH, '%s_color_transform_comparison.jpg' % image_name))
         plt.close()
 
     # Use H and S channel in HSL image since the lane color is more out-standing than others
@@ -403,7 +406,7 @@ def preprocess_image(image, image_name, show, output_images=False):
         if show:
             plt.show(block=False)
 
-        plt.savefig('output_images/%s_edge_images.jpg' % image_name)
+        plt.savefig(os.path.join(OUTPUT_PATH, '%s_edge_images.jpg' % image_name))
         plt.close()
 
     return lane_image
@@ -512,12 +515,11 @@ def lane_detection_in_video(KK, Kc, input_path, video_name, output_path, output_
 
 if __name__ == '__main__':
     plt.ion()
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    test_image_input_path = os.path.join(script_path, '..', 'test_images')
+    test_image_input_path = os.path.join(SCRIPT_PATH, '..', 'test_images')
     test_images = load_images(test_image_input_path)
 
-    camera_cal_image_path = os.path.join(script_path, '..', 'camera.json')
-    video_path = os.path.join(script_path, '..')
+    camera_cal_image_path = os.path.join(SCRIPT_PATH, '..', 'camera.json')
+    video_path = os.path.join(SCRIPT_PATH, '..')
 
     import ujson
     with open(camera_cal_image_path, 'r') as f:
@@ -525,13 +527,12 @@ if __name__ == '__main__':
         KK = np.array(data['KK'])
         Kc = np.array(data['Kc'])
 
-    test_images_output_path = os.path.join(script_path, '../output_images')
-    if not os.path.exists(test_images_output_path):
-        os.mkdir(test_images_output_path)
+    if not os.path.exists(OUTPUT_PATH):
+        os.mkdir(OUTPUT_PATH)
 
-    lane_detections(test_images, KK, Kc, output_path=test_images_output_path, show=False, output_images=True)
+    lane_detections(test_images, KK, Kc, output_path=OUTPUT_PATH, show=False, output_images=True)
 
-    video_ouput_path = test_images_output_path
+    video_ouput_path = OUTPUT_PATH
     lane_detection_in_video(KK, Kc, video_path, 'project_video.mp4', video_ouput_path)
     lane_detection_in_video(KK, Kc, video_path, 'challenge_video.mp4', video_ouput_path)
     lane_detection_in_video(KK, Kc, video_path, 'harder_challenge_video', video_ouput_path)
