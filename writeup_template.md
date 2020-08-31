@@ -68,7 +68,7 @@ Camera matrix json
 }
 ```
 
-![All images used for calibration with detected pattern corners drawn](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/undistort_images_with_detected_corners.png)
+![All images used for calibration with detected pattern corners drawn](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/undistort_images_with_detected_corners.jpg)
 
 
 ### Pipeline (single images)

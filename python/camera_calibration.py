@@ -24,6 +24,9 @@ except ImportError as e:
 import matplotlib
 matplotlib.use('TkAgg')
 
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+OUTPUT_PATH = os.path.join(SCRIPT_PATH, '../CarND-Data/P2-advanced-lane-lines/outputs')
+
 N_ROWS = 6
 N_COLS = 9
 
@@ -88,7 +91,7 @@ def detect_chess_board_corners(images, output_name, show=False):
         embed()
 
     plt.tight_layout()
-    plt.savefig('output_images/%s.png' % output_name)
+    plt.savefig(os.path.join(OUTPUT_PATH, '%s.jpg' % output_name))
 
     return imagePoints
 
@@ -163,4 +166,4 @@ if __name__ == '__main__':
     plt.title('After calibration')
     plt.tight_layout()
     plt.imshow(undistortedImages['calibration1'])
-    plt.savefig('./output_images/camera_calibration_example.jpg')
+    plt.savefig(os.path.join(OUTPUT_PATH, 'camera_calibration_example.jpg'))
