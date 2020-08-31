@@ -1,0 +1,3 @@
+[submodule "CarND-Data"]
+	path = CarND-Data
+	url = git@github.com:kunlin596/CarND-Data.git
