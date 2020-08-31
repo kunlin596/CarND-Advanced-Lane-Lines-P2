@@ -275,7 +275,7 @@ def search_lane_by_previous_result(image_name, warped_image, left_poly, right_po
         plt.plot(right_x, right_y, 'b.')
 
         plt.imshow(overlap, cmap='gray')
-        plt.savefig(os.path.join(OUTPUT_PATH, '%s_search_lane_using previous_result.jpg' % image_name))
+        plt.savefig(os.path.join(OUTPUT_PATH, '%s_search_lane_using_previous_result.jpg' % image_name))
         # plt.show(block=False)
 
     return left_poly, right_poly

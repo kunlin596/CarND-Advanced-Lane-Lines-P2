@@ -15,7 +15,7 @@ The check list of the goals of this project are the following:
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
-### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.
+> Here I will consider the rubric points individually and describe how I addressed each point in my implementation.
 
 ### Camera Calibration
 
@@ -127,7 +127,7 @@ lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)
 
 It's implemeted in function `search_lane_by_sliding_window` and `search_lane_by_previous_result`. As the name suggests, the first function is used when there is no input of the polynomial coefficients from previous results (mostlikely first frame, or in the previous frame, polynomimal fitting cannot find a good estimation and we have to start over from scratch). The second one will use the previous polynomial and filter out the valid image points in the the ROI and do polynomial again.
 
-![Lane searching by using previous polynomial results](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4_1_search_lane_using previous_result.jpg)
+![Lane searching by using previous polynomial results](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4_1_search_lane_using_previous_result.jpg)
 
 ![Lane searching by sliding window](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_lane_searching.jpg)
 
