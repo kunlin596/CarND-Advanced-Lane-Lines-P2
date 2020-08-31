@@ -32,7 +32,7 @@ Then the final step is to feed the obejct points and images points into `cv2.cal
 
 After I got the camera KK and Kc, I implemented a function `undistort_images` to undistort all images and return a list of undistorted images.
 
-![Example of camera calibration result](./output_images/camera_calibration_example.jpg)
+![Example of camera calibration result](./CardND-Data/P2-advanced-lane-lines/outputs/camera_calibration_example.jpg)
 
 I save the camera KK and Kc in a file called `camera.json` and will use it the actual lane detection pipeline.
 
@@ -68,7 +68,7 @@ Camera matrix json
 }
 ```
 
-![All images used for calibration with detected pattern corners drawn](./output_images/undistort_images_with_detected_corners.png)
+![All images used for calibration with detected pattern corners drawn](./CardND-Data/P2-advanced-lane-lines/outputs/undistort_images_with_detected_corners.png)
 
 
 ### Pipeline (single images)
@@ -79,7 +79,7 @@ All related code of the lane detection pipeline is located in `python/lane_detec
 
 Here is an undistorted image using camera KK and Kc in `camera.json`.
 
-![Example of image undistortion result](./output_images/camera_calibration_example_2.jpg)
+![Example of image undistortion result](./CardND-Data/P2-advanced-lane-lines/outputs/camera_calibration_example_2.jpg)
 
 
 #### 2. Image warping
@@ -100,7 +100,7 @@ WARPED_ROI_CORNERS = np.float32([(450, 0),
 
 Homography is found by `cv2.getPerspectiveTransform`.
 
-![Warped images](./output_images/straight_lines1_edge_images.jpg)
+![Warped images](./CardND-Data/P2-advanced-lane-lines/outputs/straight_lines1_edge_images.jpg)
 
 And a in the sedon
 
@@ -111,7 +111,7 @@ This step is implemented in function `preprocess_image`.
 
 The first step is to examine the color spaces to see if we can find a channel of a particular color space where lane line is visually outstanding.
 
-![Example of color spaces](./output_images/straight_lines1_color_transform_comparison.jpg)
+![Example of color spaces](./CardND-Data/P2-advanced-lane-lines/outputs/straight_lines1_color_transform_comparison.jpg)
 
 Depending on the obsevation in the color channels listed above, the processing logic is defined as
 
@@ -134,7 +134,7 @@ lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)
 
 It's implemeted in function `search_lane`.
 
-![Example of color spaces](./output_images/straight_lines1_lane_searching.jpg)
+![Example of color spaces](./CardND-Data/P2-advanced-lane-lines/outputs/straight_lines1_lane_searching.jpg)
 
 #### 5. Curvature calculation
 
@@ -142,7 +142,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 6. Final result output
 
-![Example of final result](./output_images/straight_lines1_result.jpg)
+![Example of final result](./CardND-Data/P2-advanced-lane-lines/outputs/straight_lines1_result.jpg)
 
 ---
 
@@ -150,7 +150,7 @@ It's implemented in function `measure_curvature_pixels`.
 
 #### 1. Final result outputs
 
-Here's a [link to my video result](./output_images/project_video.mp4)
+Here's a [link to my video result](./CardND-Data/P2-advanced-lane-lines/outputs/project_video.mp4)
 
 ---
 
