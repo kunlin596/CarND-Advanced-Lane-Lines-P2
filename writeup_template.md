@@ -1,24 +1,21 @@
-## Writeup Template
-
----
+## Writeup
 
 **Advanced Lane Finding Project**
 
-The goals / steps of this project are the following:
+The check list of the goals of this project are the following:
 
-* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
-* Apply a distortion correction to raw images.
-* Use color transforms, gradients, etc., to create a thresholded binary image.
-* Apply a perspective transform to rectify binary image ("birds-eye view").
-* Detect lane pixels and fit to find the lane boundary.
-* Determine the curvature of the lane and vehicle position with respect to center.
-* Warp the detected lane boundaries back onto the original image.
-* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+- [x] Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
+- [x] Apply a distortion correction to raw images.
+- [x] Use color transforms, gradients, etc., to create a thresholded binary image.
+- [x] Apply a perspective transform to rectify binary image ("birds-eye view").
+- [x] Detect lane pixels and fit to find the lane boundary.
+- [x] Determine the curvature of the lane and vehicle position with respect to center.
+- [x] Warp the detected lane boundaries back onto the original image.
+- [x] Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.
-
----
 
 ### Camera Calibration
 
@@ -70,8 +67,7 @@ Camera matrix json
 
 ![All images used for calibration with detected pattern corners drawn](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/undistort_images_with_detected_corners.jpg)
 
-
-### Pipeline (single images)
+### Pipeline
 
 All related code of the lane detection pipeline is located in `python/lane_detection.py`
 
@@ -80,7 +76,6 @@ All related code of the lane detection pipeline is located in `python/lane_detec
 Here is an undistorted image using camera KK and Kc in `camera.json`.
 
 ![Example of image undistortion result](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/camera_calibration_example_2.jpg)
-
 
 #### 2. Image warping
 
@@ -98,13 +93,11 @@ WARPED_ROI_CORNERS = np.float32([(450, 0),
                                  (IMAGE_SHAPE[1] - 450, IMAGE_SHAPE[0])])
 ```
 
-Homography is found by `cv2.getPerspectiveTransform`.
+Homography for perspective transform is fone by using `cv2.getPerspectiveTransform`.
 
 ![Warped images](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_edge_images.jpg)
 
-And a in the sedon
-
-#### 3. Color transformations and masking
+#### 3. Binary image creation
 The purpose of this step is to find the proper binary image for later processing. and the input image is already warped.
 
 This step is implemented in function `preprocess_image`.
@@ -132,9 +125,11 @@ lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)
 
 #### 4. Lane searching and polynomial fitting
 
-It's implemeted in function `search_lane`.
+It's implemeted in function `search_lane_by_sliding_window` and `search_lane_by_previous_result`. As the name suggests, the first function is used when there is no input of the polynomial coefficients from previous results (mostlikely first frame, or in the previous frame, polynomimal fitting cannot find a good estimation and we have to start over from scratch). The second one will use the previous polynomial and filter out the valid image points in the the ROI and do polynomial again.
 
-![Example of color spaces](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_lane_searching.jpg)
+![Lane searching by using previous polynomial results](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4_1_search_lane_using previous_result.jpg)
+
+![Lane searching by sliding window](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_lane_searching.jpg)
 
 #### 5. Curvature calculation
 
@@ -144,13 +139,11 @@ It's implemented in function `measure_curvature_pixels`.
 
 ![Example of final result](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_result.jpg)
 
----
-
 ### Pipeline (video)
 
 #### 1. Final result outputs
 
-Here's a [link to my video result](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4)
+Here's the [project_video](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4) with lane detection results overlayed.
 
 ---
 
