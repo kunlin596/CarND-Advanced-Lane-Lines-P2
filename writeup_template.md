@@ -67,7 +67,7 @@ Camera matrix json
 
 ![All images used for calibration with detected pattern corners drawn](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/undistort_images_with_detected_corners.jpg)
 
-### Pipeline
+### Pipeline description
 
 All related code of the lane detection pipeline is located in `python/lane_detection.py`
 
@@ -127,8 +127,10 @@ lane_image = ((hls_s_mask & lab_b_mask & hls_h_mask) | (hls_l_mask & hls_h_mask)
 
 It's implemeted in function `search_lane_by_sliding_window` and `search_lane_by_previous_result`. As the name suggests, the first function is used when there is no input of the polynomial coefficients from previous results (mostlikely first frame, or in the previous frame, polynomimal fitting cannot find a good estimation and we have to start over from scratch). The second one will use the previous polynomial and filter out the valid image points in the the ROI and do polynomial again.
 
+**Lane searching by using previous polynomial results**
 ![Lane searching by using previous polynomial results](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4_1_search_lane_using_previous_result.jpg)
 
+**Lane searching by sliding window**
 ![Lane searching by sliding window](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_lane_searching.jpg)
 
 #### 5. Curvature calculation
@@ -139,14 +141,17 @@ It's implemented in function `measure_curvature_pixels`.
 
 ![Example of final result](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/straight_lines1_result.jpg)
 
-### Pipeline (video)
-
-#### 1. Final result outputs
+### Pipeline test (video)
 
 Here's the [project_video](https://github.com/kunlin596/CarND-Data/blob/master/P2-advanced-lane-lines/outputs/project_video.mp4) with lane detection results overlayed.
 
----
+> For `challenge_video.mp4` and `harder_challenge.mp4`, It's still on the TODO list.
 
 ### Discussion
 
-TODO
+1. The trapezoid ROI region is hard to tweak by hand, once it's tweaked properly, the output from perspectvie transform will be nicer (clearer lane lines). If only we can get the transform of the camera in the car frame...
+2. Tweaking the color channel threshold is hard due to lighting condition and the materials itself (some parts of the road is lighter and some parts are darker).
+3. I've considered using a sobel kernel to find the magtitude and directions of the gradients, but I didn't get a good result out of it (usage was wrong?), so I didn't bother use it and without it I can still get a fair good result for project video. But more more complex scene, it could be very helpful.
+4. I was using some techniques like choosing one lane line with higher confidence to modify the other one with lower confidence duing sliding window search. When one lane is dashed line, mostlikely the its peak in histgram will become indistinghishable with neighborhood (if there are are noises near, like another car passed by, or tree shadows, etc).
+5. In `challenge` video clip, we have more drametic lighting condition changes, which makes the color thresholding failed more often.
+6. In `harder_challenge` video clip, in addtion to dramatic lighting condition changes, we have more curved lanes. But if only we can tackle the lighting condition challenge, using higher order polynomial could solve the problem.
