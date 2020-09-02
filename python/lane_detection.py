@@ -290,7 +290,7 @@ def measure_curvature(poly, y_value):
     """
     A = poly[0]
     B = poly[1]
-    return (1 + (2 * A * y_value * Y_METER_PER_PIXEL + B) ** 2) ** 1.5 / np.abs(2 * A)
+    return (1 + (2 * A * y_value + B) ** 2) ** 1.5 / np.abs(2 * A)
 
 
 def preprocess_image(image, image_name, show, output_images=False):
@@ -439,20 +439,25 @@ def lane_detection(image_name, image, KK, Kc, show=False, left_poly=None, right_
     y_range = np.arange(0, warped_image.shape[0])
     left_lane_corners = None
     if left_poly is not None:
-        left_curvature = measure_curvature(left_poly, image.shape[0])
-        log.debug('left_curvature=%s (m)', left_curvature)
         warped_left_lane_corners = np.vstack([np.polyval(left_poly, y_range), y_range]).T
         left_lane_corners = cv2.perspectiveTransform(warped_left_lane_corners.reshape(1, -1, 2), homography_inv).reshape(-1, 2)
+        bottom_left_x = left_lane_corners[-1][0]
+        # Recompute the curvature
+        fit_cr = np.polyfit(left_lane_corners[:, 1] * Y_METER_PER_PIXEL, left_lane_corners[:, 0] * X_METER_PER_PIXEL, 2)
+        left_curvature = measure_curvature(fit_cr, image.shape[0] * Y_METER_PER_PIXEL)
+        log.debug('left_curvature=%.3f (m)', left_curvature)
 
-    right_lane_corners = None
     if right_poly is not None:
-        right_curvature = measure_curvature(right_poly, image.shape[0])
-        log.debug('right_curvature=%s (m)', right_curvature)
         warped_right_lane_corners = np.vstack([np.polyval(right_poly, y_range), y_range]).T
         right_lane_corners = cv2.perspectiveTransform(warped_right_lane_corners.reshape(1, -1, 2), homography_inv).reshape(-1, 2)
+        # Recompute the curvature
+        fit_cr = np.polyfit(right_lane_corners[:, 1] * Y_METER_PER_PIXEL, right_lane_corners[:, 0] * X_METER_PER_PIXEL, 2)
+        right_curvature = measure_curvature(fit_cr, image.shape[0] * Y_METER_PER_PIXEL)
+        log.debug('right_curvature=%.3f (m)', right_curvature)
 
-    bottom_left_x = np.polyval(left_poly, IMAGE_SHAPE[0])
-    bottom_right_x = np.polyval(right_poly, IMAGE_SHAPE[0])
+    # Measure deviation
+    bottom_left_x = left_lane_corners[-1][0]
+    bottom_right_x = right_lane_corners[-1][0]
     deviate_from_lane_center = ((bottom_left_x + bottom_right_x) / 2.0 - IMAGE_SHAPE[1] // 2) * X_METER_PER_PIXEL
     log.debug('deviate_from_lane_center=%.2f (m)', deviate_from_lane_center)
 
